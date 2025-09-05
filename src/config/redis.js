@@ -62,13 +62,17 @@ const initializeRedis = async () => {
     logger.error('❌ Redis initialization failed:', error);
     
     // In production, we want to continue even if Redis fails
-    // but log the error and potentially use in-memory fallback
+    // but log the error and use in-memory fallback
     if (process.env.NODE_ENV === 'production') {
       logger.warn('⚠️ Running without Redis cache - using in-memory fallback');
-      return createInMemoryCache();
+      redisClient = createInMemoryCache();
+      return redisClient;
     }
     
-    throw error;
+    // In development, still use in-memory cache instead of crashing
+    logger.warn('⚠️ Using in-memory cache fallback in development');
+    redisClient = createInMemoryCache();
+    return redisClient;
   }
 };
 
