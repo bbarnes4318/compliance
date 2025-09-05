@@ -103,8 +103,12 @@ app.use('*', (req, res) => {
 
 async function startServer() {
   try {
-    await connectDatabase();
-    logger.info('Database connected successfully');
+    const db = await connectDatabase();
+    if (db) {
+      logger.info('Database connected successfully');
+    } else {
+      logger.warn('Database connection failed - continuing without database');
+    }
 
     await initializeRedis();
     logger.info('Redis cache initialized');

@@ -65,17 +65,24 @@ const connectDatabase = async () => {
     if (process.env.NODE_ENV !== 'production') {
       await sequelize.sync({ alter: true });
       logger.info('📝 Database schema synchronized');
+    } else {
+      // In production, just check if tables exist, don't auto-migrate
+      try {
+        await sequelize.sync({ alter: false });
+        logger.info('📝 Database schema validated');
+      } catch (syncError) {
+        logger.warn('⚠️ Database sync skipped, assuming tables exist:', syncError.message);
+      }
     }
     
     return sequelize;
   } catch (error) {
     logger.error('❌ Database connection failed:', error);
     
-    // Retry logic for production
+    // In production, don't crash the app - just log and continue
     if (process.env.NODE_ENV === 'production') {
-      logger.info('🔄 Retrying database connection in 5 seconds...');
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      return connectDatabase();
+      logger.warn('⚠️ Continuing without database connection - some features may not work');
+      return null;
     }
     
     throw error;
